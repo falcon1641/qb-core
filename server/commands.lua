@@ -266,7 +266,7 @@ QBCore.Commands.Add('transferveh', 'Transfer Vehicle', {{name = 'id', help = 'Pl
     else
         TriggerClientEvent('QBCore:Notify', src, 'Must Specify ID', 'error')
     end
-end, 'user)
+end, 'user')
 
 -- Me command
 QBCore.Commands.Add('me', 'Show Local Message', {}, false, function(source, args)
