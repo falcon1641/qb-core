@@ -84,16 +84,24 @@ QBShared.Gangs = {
 		label = 'Families',
 		grades = {
             ['0'] = {
-                name = 'Recruit'
+                name = 'Associate'
             },
 			['1'] = {
-                name = 'Enforcer'
+                name = 'Soldier'
             },
 			['2'] = {
-                name = 'Shot Caller'
+                name = 'Capo'
             },
 			['3'] = {
-                name = 'Boss',
+                name = 'UnderBoss',
+				
+            },
+			['4'] = {
+                name = 'Concierge',
+				isboss = true
+            },
+			['5'] = {
+                name = 'Godfather',
 				isboss = true
             },
         },
