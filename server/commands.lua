@@ -79,7 +79,7 @@ QBCore.Commands.Add('togglepvp', 'Toggle PVP on the server (Admin Only)', {}, fa
     local pvp_state = QBConfig.Server.pvp
     QBConfig.Server.pvp = not pvp_state
     TriggerClientEvent('QBCore:Client:PvpHasToggled', -1, QBConfig.Server.pvp)
-end, 'admin')
+end, 'god')
 -- Permissions
 
 QBCore.Commands.Add('addpermission', 'Give Player Permissions (God Only)', { { name = 'id', help = 'ID of player' }, { name = 'permission', help = 'Permission level' } }, true, function(source, args)
@@ -219,19 +219,92 @@ QBCore.Commands.Add('ooc', 'OOC Chat Message', {}, false, function(source, args)
     end
 end, 'user')
 
--- Me command
+--Panic
+QBCore.Commands.Add("panic", "Press your Police Panic Button", {}, false, function(source)
+    local src = source
+    local Player = QBCore.Functions.GetPlayer(src)
+    if Player then
+        if Player.PlayerData.job.name == "police" and Player.PlayerData.job.onduty then
+            TriggerClientEvent('police:client:SendEmergencyMessage', src)
+        end
+    end
+end)
 
-QBCore.Commands.Add('me', 'Show local message', {{name = 'message', help = 'Message to respond with'}}, false, function(source, args)
+--TransferVeh
+QBCore.Commands.Add('transferveh', 'Transfer Vehicle', {{name = 'id', help = 'Player ID'}}, true, function(source, args)
+    local src = source
+    local targetId = tonumber(args[1])
+    local ped = GetPlayerPed(src)
+    local target = GetPlayerPed(targetId)
+    local sendingPlayer = QBCore.Functions.GetPlayer(src)
+    local targetPlayer = QBCore.Functions.GetPlayer(targetId)
+    local vehicle = GetVehiclePedIsIn(ped, false)
+    local plate = GetVehicleNumberPlateText(vehicle)
+    if targetId ~= nil then
+        if vehicle ~= 0 then
+            if target ~= 0 then
+                local pedCoords = GetEntityCoords(ped)
+                local targetCoords = GetEntityCoords(target)
+                if #(pedCoords - targetCoords) < 5 then
+                    local result = exports.oxmysql:scalarSync('SELECT citizenid from player_vehicles WHERE plate = ?', {plate})
+                    if result == sendingPlayer.PlayerData.citizenid then
+                        exports.oxmysql:execute('UPDATE player_vehicles SET citizenid = ? WHERE plate =?', {targetPlayer.PlayerData.citizenid, plate})
+                        TriggerClientEvent('QBCore:Notify', src, 'You Transferred Vehicle With Plate ' ..plate, 'success')
+                        TriggerClientEvent('QBCore:Notify', targetId, 'You Received Vehicle With Plate ' ..plate, 'success')
+                    else
+                        TriggerClientEvent('QBCore:Notify', src, 'You Don\'t Own This Vehicle', 'error')
+                    end
+                else
+                    TriggerClientEvent('QBCore:Notify', src, 'Player Too Far Away', 'error')
+                end
+            else
+                TriggerClientEvent('QBCore:Notify', src, 'Player Not Online', 'error')
+            end
+        else
+            TriggerClientEvent('QBCore:Notify', src, 'You Are Not In A Vehicle', 'error')
+        end
+    else
+        TriggerClientEvent('QBCore:Notify', src, 'Must Specify ID', 'error')
+    end
+end, 'user)
+
+-- Me command
+QBCore.Commands.Add('me', 'Show Local Message', {}, false, function(source, args)
     local src = source
     local ped = GetPlayerPed(src)
     local pCoords = GetEntityCoords(ped)
+    local message = table.concat(args, ' ')
     local msg = table.concat(args, ' ')
-    if msg == '' then return end
-    for k,v in pairs(QBCore.Functions.GetPlayers()) do
+    local Players = QBCore.Functions.GetPlayers()
+    local Player = QBCore.Functions.GetPlayer(src)
+    for k, v in pairs(Players) do
         local target = GetPlayerPed(v)
         local tCoords = GetEntityCoords(target)
         if #(pCoords - tCoords) < 20 then
             TriggerClientEvent('QBCore:Command:ShowMe3D', v, src, msg)
+         end
+        if v == src then
+            TriggerClientEvent('chat:addMessage', v, {
+                color = { 0, 0, 255},
+                multiline = true,
+                args = {'ME | '.. GetPlayerName(src), message}
+            })
+        elseif #(GetEntityCoords(GetPlayerPed(src)) - GetEntityCoords(GetPlayerPed(v))) < 20.0 then
+            TriggerClientEvent('chat:addMessage', v, {
+                color = { 0, 0, 255},
+                multiline = true,
+                args = {'ME | '.. GetPlayerName(src), message}
+            })
+        elseif QBCore.Functions.HasPermission(v, 'admin') then
+            if QBCore.Functions.IsOptin(v) then
+                TriggerClientEvent('chat:addMessage', v, {
+                    color = { 0, 0, 255},
+                    multiline = true,
+                    args = {'Proximity ME | '.. GetPlayerName(src), message}
+                })
+                TriggerEvent('qb-log:server:CreateLog', 'me', 'ME', 'white', '**' .. GetPlayerName(src) .. '** (CitizenID: ' .. Player.PlayerData.citizenid .. ' | ID: ' .. src .. ') **Message:** ' .. message, false)
+            end
         end
     end
-end, 'user')
+  end, 'user')
+
