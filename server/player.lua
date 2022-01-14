@@ -80,6 +80,7 @@ function QBCore.Player.CheckPlayerData(source, PlayerData)
     PlayerData.metadata['craftingrep'] = PlayerData.metadata['craftingrep'] or 0
     PlayerData.metadata['attachmentcraftingrep'] = PlayerData.metadata['attachmentcraftingrep'] or 0
     PlayerData.metadata['currentapartment'] = PlayerData.metadata['currentapartment'] or nil
+    PlayerData.metadata['cardeliveryxp'] = PlayerData.metadata['cardeliveryxp'] or 0
     if PlayerData.metadata['jobrep'] ~= nil then
 		PlayerData.metadata['jobrep'] = {
 			['tow'] = PlayerData.metadata['jobrep']['tow'] or 0,
@@ -103,9 +104,14 @@ function QBCore.Player.CheckPlayerData(source, PlayerData)
         ['date'] = nil
     }
     PlayerData.metadata['licences'] = PlayerData.metadata['licences'] or {
-        ['driver'] = true,
+        ['driver'] = false,
         ['business'] = false,
-        ['weapon'] = false
+        ['weapon'] = false,
+        ['cdl'] = false,
+        ['hunting'] = true,
+        ['fishing'] = true,
+        ['bike'] = false,
+        ['pilot'] = false,
     }
     PlayerData.metadata['inside'] = PlayerData.metadata['inside'] or {
         house = nil,
